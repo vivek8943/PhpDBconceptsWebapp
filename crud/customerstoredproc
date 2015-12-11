@@ -1,0 +1,37 @@
+
+create proc CustomerDetails @CustomerName nvarchar(45)
+AS
+BEGIN
+
+select C.CustomerID, C.CustomerName, C.CustomerAddress,
+C.CustomerCity, C.CustomerState, C.CustomerZip,  
+Cast(SUM((OP.QuantityOrdered*OP.UnitPrice) - (OP.QuantityOrdered*OP.UnitPrice*C.Discount/100) + ((((OP.QuantityOrdered*OP.UnitPrice) - (OP.QuantityOrdered*OP.UnitPrice*C.Discount/100))*C.Tax/100)) )as decimal(18,2)) as 'YTD Purchases',
+C.CreditLimit,
+Cast(SUM((
+(OP.QuantityOrdered*OP.UnitPrice) - 
+(OP.QuantityOrdered*OP.UnitPrice*C.Discount/100) + 
+((((OP.QuantityOrdered*OP.UnitPrice) - (OP.QuantityOrdered*OP.UnitPrice*C.Discount/100))*C.Tax/100)) 
+) - (II.PaymentAmount)) as decimal(18,2))as 'Outstanding Balance',
+C.Discount as 'Discount%' 
+from Customer_T C 
+INNER JOIN Order_T O ON O.CustomerID = C.CustomerID
+INNER JOIN OrderProduct_T OP ON OP.OrderID = O.OrderID
+INNER JOIN InvoiceItem_T II ON II.OrderID = OP.OrderID
+LEFT OUTER JOIN ( SELECT C.CustomerID,SUM(II.PaymentAmount) AS YTDAmt FROM Customer_T C 
+					INNER JOIN Order_T O On O.CustomerID = C.CustomerID
+					INNER JOIN OrderProduct_T OP ON OP.OrderID =O.OrderID
+					INNER JOIN InvoiceItem_T II on II.OrderID = OP.OrderID
+					WHERE O.OrderDate > DateAdd(yy, -1, GetDate())
+					AND OP.ProductID = II.ProductID
+					GROUP BY C.CustomerID) YTD ON YTD.CustomerID = C.CustomerID
+Where OP.ProductID = II.ProductID
+AND  O.OrderDate > DateAdd(yy, -1, GetDate())
+AND C.CustomerName = @CustomerName
+Group By
+C.CustomerID, C.CustomerName, C.CustomerAddress,
+C.CustomerCity, C.CustomerState, C.CustomerZip, 
+C.CreditLimit, C.Discount
+
+END
+select * from Customer_T
+exec CustomerDetails 'Contemporary Casuals'

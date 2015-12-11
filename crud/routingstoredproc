@@ -1,0 +1,15 @@
+create proc Routing @ProductDescription varchar(25)
+as
+begin
+Select P.ProductID, P.ProductDescription, 
+OS.OperationSeqNo, O.OperationDescription, W.WorkCenterLocation,
+CONVERT(VARCHAR, O.SetupTime, 108) as SetupTime, CONVERT(VARCHAR, O.StandardOperationTime, 108)as StandardOperationTime
+from Product_T P
+INNER JOIN OperationSequence_T OS ON P.ProductID = OS.ProductID
+INNER JOIN Operation_T O ON OS.OperationID = O.OperationID
+INNER JOIN WorkCenter_T W ON O.WorkCenterID = W.WorkCenterID
+ where P.ProductDescription = @ProductDescription
+end
+
+exec Routing 'Computer Desk'
+

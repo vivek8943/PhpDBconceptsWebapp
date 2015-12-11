@@ -1,0 +1,16 @@
+create proc BillOfMaterials @ProductDescription varchar(25)
+ as
+ begin
+ select P.ProductID, P.ProductDescription, 
+ M.PartID, M.PartDescription,sum(M.PartQuantity) as 'Quantity Used', M.PartLocation,M.PartCode 
+ from 
+ Product_T P
+ INNER JOIN ProductMaterial_T PM ON P.ProductID = PM.ProductID
+ INNER JOIN Material_T M ON M.PartID = PM.PartID 
+ where 
+ P.ProductDescription = @ProductDescription
+ Group by
+ P.ProductID, P.ProductDescription, 
+ M.PartID, M.PartDescription, M.PartLocation,M.PartCode 
+ end
+ exec BillOfMaterials 'Computer Desk'

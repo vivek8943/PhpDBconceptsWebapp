@@ -1,0 +1,17 @@
+create proc ProductData @ProductDescription varchar(25)
+as
+begin
+select P.ProductID, P.ProductDescription, M.PartLocation,sum(PW.QuantityOnHand) as 'Quantity On Hand',sum(PW.Reorder) as 'Reorder Point',
+sum(PW.ScheduledReceipts) as 'Scheduled Receipts',sum(PW.QuantityReorder) as 'Reorder Quantity', 
+sum(PW.QuantityBackOrdered) as 'Quantity Backordered',  P.ProductFinish, sum(P.ProductPrice) as 'Product Price'
+ from Product_T P
+ INNER JOIN ProductMaterial_T PM ON PM.ProductID = P.ProductID
+ INNER JOIN Material_T M ON M.PartID = PM.PartID
+ INNER JOIN ProductWarehouse_T PW ON P.ProductID = PW.ProductID
+ INNER JOIN Warehouse_T W ON W.WarehouseID = PW.WarehouseID
+ where P.ProductDescription = @ProductDescription
+ GROUP BY
+ P.ProductID, P.ProductDescription, M.PartLocation, P.ProductFinish
+ end
+ 
+ exec ProductData 'Computer Desk'
